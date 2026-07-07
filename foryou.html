@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>For You</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500&display=swap" rel="stylesheet">
+	<style>
+		:root {
+			--maroon: #6b0f1a;
+			--blue-scene: #7c9fdb;
+			--shadow-edge: rgba(10, 3, 6, 0.78);
+			--text-white: #ffffff;
+			--paper-blue: #2d5ea6;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			min-height: 100vh;
+			display: grid;
+			place-items: center;
+			position: relative;
+			overflow-x: hidden;
+			overflow-y: hidden;
+			background:
+				radial-gradient(circle at center, rgba(0, 0, 0, 0) 40%, var(--shadow-edge) 100%),
+				var(--maroon);
+			padding: 24px;
+		}
+
+		body.show-next {
+			background: #1a2639;
+		}
+
+		body.post-scroll {
+			display: block;
+			overflow-y: auto;
+		}
+
+		.focus-content {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 20px;
+			animation: content-fade-cycle 4s linear forwards;
+			transition: opacity 500ms ease;
+			z-index: 3;
+		}
+
+		body.show-next .focus-content {
+			opacity: 0;
+			pointer-events: none;
+		}
+
+		body.post-scroll .focus-content {
+			display: none;
+		}
+
+		.open-image-box {
+			width: min(78vw, 400px);
+			aspect-ratio: 1 / 1;
+			position: relative;
+			display: grid;
+			place-items: center;
+			animation: gift-sequence 4s ease-in-out forwards;
+			transform-origin: center;
+			overflow: visible;
+			z-index: 2;
+		}
+
+		.gift-image {
+			position: absolute;
+			inset: 0;
+			width: 100%;
+			height: 100%;
+			object-fit: contain;
+			display: block;
+		}
+
+		.gift-image.closed {
+			animation: closed-visibility 4s linear forwards;
+		}
+
+		.gift-image.opened {
+			opacity: 0;
+			animation: opened-visibility 4s linear forwards;
+		}
+
+		.flower-background {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100vw;
+			height: 100vh;
+			pointer-events: none;
+			overflow: hidden;
+			opacity: 1;
+			transition: opacity 1200ms cubic-bezier(0.4, 0, 0.2, 1);
+			z-index: 20;
+		}
+
+		.flower-background.rain-fade {
+			opacity: 0;
+		}
+
+		.burst-flower,
+		.rain-flower {
+			position: absolute;
+			width: var(--size, 68px);
+			height: var(--size, 68px);
+			opacity: 0;
+			will-change: transform, opacity;
+		}
+
+		.burst-flower {
+			left: 50%;
+			top: 50%;
+			animation: burst-out var(--burst-duration, 1200ms) cubic-bezier(0.16, 0.8, 0.23, 1) forwards;
+		}
+
+		.rain-flower {
+			left: 0;
+			top: 0;
+			animation: rain-fall var(--rain-duration, 6.4s) linear forwards;
+			animation-delay: var(--rain-delay, 0s);
+		}
+
+		.burst-flower img,
+		.rain-flower img {
+			width: 100%;
+			height: 100%;
+			object-fit: contain;
+			display: block;
+		}
+
+		.rain-flower img {
+			animation: rain-sway var(--rain-duration, 6.4s) ease-in-out infinite;
+			animation-delay: var(--rain-delay, 0s);
+		}
+
+
+		.dedication {
+			margin: 0;
+			color: var(--text-white);
+			font-family: 'Dancing Script', cursive;
+			font-weight: 500;
+			text-align: center;
+			font-size: clamp(34px, 5.6vw, 56px);
+			line-height: 1.15;
+			text-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+		}
+
+		.next-scene {
+			position: fixed;
+			inset: 0;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 20px;
+			opacity: 0;
+			transform: scale(0.96);
+			pointer-events: none;
+			transition: opacity 1200ms ease, transform 1200ms ease;
+			padding: 24px;
+			z-index: 4;
+			background-color: #1a2639;
+			background-image:
+				repeating-linear-gradient(90deg, transparent 0, transparent 8px, rgba(255, 255, 255, 0.03) 8px, rgba(255, 255, 255, 0.03) 9px),
+				repeating-linear-gradient(0deg, transparent 0, transparent 8px, rgba(255, 255, 255, 0.025) 8px, rgba(255, 255, 255, 0.025) 9px);
+			background-size: 9px 9px, 9px 9px;
+		}
+
+		body.show-next .next-scene {
+			opacity: 1;
+			transform: scale(1);
+			pointer-events: auto;
+		}
+
+		body.post-scroll .next-scene {
+			position: relative;
+			inset: auto;
+			min-height: auto;
+			width: 100%;
+			justify-content: flex-start;
+			padding-top: 0;
+			padding-bottom: 0;
+		}
+
+		.post-print-section {
+			display: none;
+			min-height: 100vh;
+			width: 100%;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: clamp(24px, 3.5vw, 42px);
+			padding: clamp(24px, 4vw, 56px);
+			background-color: #1a2639;
+			background-image:
+				repeating-linear-gradient(90deg, transparent 0, transparent 8px, rgba(255, 255, 255, 0.03) 8px, rgba(255, 255, 255, 0.03) 9px),
+				repeating-linear-gradient(0deg, transparent 0, transparent 8px, rgba(255, 255, 255, 0.025) 8px, rgba(255, 255, 255, 0.025) 9px);
+			background-size: 9px 9px, 9px 9px;
+		}
+
+		body.post-scroll .post-print-section {
+			display: flex;
+		}
+
+		.post-title {
+			margin: 0;
+			font-family: 'Dancing Script', cursive;
+			font-size: clamp(44px, 6.5vw, 88px);
+			line-height: 1.06;
+			text-align: center;
+			color: #ffffff;
+			font-weight: 500;
+		}
+
+		.gift-grid {
+			width: min(1120px, 95vw);
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: clamp(18px, 3vw, 44px);
+		}
+
+		.gift-link {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: flex-start;
+			gap: 12px;
+			text-decoration: none;
+			color: #ffffff;
+		}
+
+		.gift-link img {
+			width: min(250px, 27vw);
+			height: min(250px, 27vw);
+			object-fit: contain;
+			display: block;
+			filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.28));
+			animation: hover-vibrate 1.2s ease-in-out infinite;
+		}
+
+		.gift-caption {
+			margin: 0;
+			font-family: 'Times New Roman', Times, serif;
+			font-size: clamp(24px, 2.2vw, 34px);
+			line-height: 1.2;
+			text-align: center;
+			color: #ffffff;
+		}
+
+		@media (max-width: 900px) {
+			.gift-grid {
+				grid-template-columns: 1fr;
+				width: min(560px, 92vw);
+			}
+
+			.gift-link img {
+				width: min(260px, 62vw);
+				height: min(260px, 62vw);
+			}
+		}
+
+		.print-zone {
+			position: relative;
+			width: min(90vw, 380px);
+		}
+
+		.printer-slot {
+			width: 100%;
+			height: 30px;
+			background: linear-gradient(to bottom, #ffffff 0%, #cccccc 30%, #777777 70%, #333333 100%);
+			border-radius: 10px;
+			box-shadow:
+				inset 0 2px 5px rgba(0, 0, 0, 0.5),
+				0 4px 10px rgba(0, 0, 0, 0.4);
+			position: relative;
+			z-index: 10;
+		}
+
+		.printer-slot::after {
+			content: '';
+			position: absolute;
+			top: 6px;
+			left: 5%;
+			width: 90%;
+			height: 8px;
+			background: #111;
+			border-radius: 4px;
+			box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
+		}
+
+		.paper-track {
+			width: 88%;
+			margin: 0 auto;
+			height: min(72vh, 560px);
+			overflow: hidden;
+			position: relative;
+			top: -10px;
+			z-index: 5;
+		}
+
+		.photo-paper {
+			background: #ffffff;
+			padding: 24px 18px 20px;
+			box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+			text-align: center;
+			position: relative;
+			transform: translateY(-102%);
+			border-radius: 2px;
+		}
+
+		.birthday-text {
+			margin: 0 0 14px;
+			font-family: 'Dancing Script', cursive;
+			font-size: clamp(36px, 8.2vw, 56px);
+			line-height: 1.07;
+			text-align: center;
+			color: var(--paper-blue);
+			font-weight: 500;
+		}
+
+		.image-container {
+			width: 100%;
+			aspect-ratio: 1 / 1;
+			overflow: hidden;
+			border: 1px solid #d9d9d9;
+			border-radius: 2px;
+		}
+
+		.image-container img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			display: block;
+		}
+
+		.heart-sticker {
+			position: absolute;
+			bottom: 10px;
+			left: 14px;
+			font-size: 28px;
+			filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+		}
+
+		.photo-paper.is-printing {
+			animation: rollOutPaper 4.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+		}
+
+		@keyframes gift-sequence {
+			0%, 12% { transform: translateX(0) rotate(0deg) scale(1); }
+			16% { transform: translateX(-8px) rotate(-2.5deg) scale(1); }
+			20% { transform: translateX(7px) rotate(2deg) scale(1); }
+			24% { transform: translateX(-6px) rotate(-1.8deg) scale(1); }
+			28% { transform: translateX(5px) rotate(1.6deg) scale(1); }
+			36% { transform: translateX(0) rotate(0deg) scale(0.95); }
+			48% { transform: translateX(0) rotate(0deg) scale(1.14); }
+			58% { transform: translateX(0) rotate(0deg) scale(1.04); }
+			100% { transform: translateX(0) rotate(0deg) scale(1); }
+		}
+
+		@keyframes content-fade-cycle {
+			0%, 82% { opacity: 1; }
+			100% { opacity: 0; }
+		}
+
+		@keyframes closed-visibility {
+			0%, 52% { opacity: 1; }
+			56%, 100% { opacity: 0; }
+		}
+
+		@keyframes opened-visibility {
+			0%, 52% { opacity: 0; }
+			56%, 82% { opacity: 1; }
+			100% { opacity: 0; }
+		}
+
+		@keyframes burst-out {
+			0% {
+				opacity: 0;
+				transform: translate(-50%, -50%) scale(0.25) rotate(var(--r0, 0deg));
+			}
+			22% {
+				opacity: 0.95;
+			}
+			100% {
+				opacity: 0.88;
+				transform: translate(calc(-50% + var(--tx, 0px)), calc(-50% + var(--ty, -260px))) scale(1) rotate(var(--r1, 180deg));
+			}
+		}
+
+		@keyframes rain-fall {
+			0% {
+				opacity: 0;
+				transform: translate(var(--rx, 50vw), -25vh) rotate(var(--rr0, 0deg));
+			}
+			8% {
+				opacity: 0.95;
+			}
+			90% {
+				opacity: 0.95;
+			}
+			100% {
+				opacity: 0;
+				transform: translate(var(--rx, 50vw), 115vh) rotate(var(--rr1, 220deg));
+			}
+		}
+
+		@keyframes rain-sway {
+			0%, 100% { transform: translateX(0) scale(0.98); }
+			25% { transform: translateX(-8px) scale(1); }
+			50% { transform: translateX(9px) scale(1.02); }
+			75% { transform: translateX(-6px) scale(1); }
+		}
+
+		@keyframes rollOutPaper {
+			0% { transform: translateY(-102%); }
+			20% { transform: translateY(-72%); }
+			40% { transform: translateY(-52%); }
+			60% { transform: translateY(-28%); }
+			80% { transform: translateY(-8%); }
+			100% { transform: translateY(0%); }
+		}
+
+		@keyframes hover-vibrate {
+			0%, 100% { transform: translate(0, 0) rotate(0deg); }
+			20% { transform: translate(-1px, 1px) rotate(-1deg); }
+			40% { transform: translate(1px, -1px) rotate(1deg); }
+			60% { transform: translate(-1px, -1px) rotate(-0.7deg); }
+			80% { transform: translate(1px, 1px) rotate(0.7deg); }
+		}
+
+	</style>
+</head>
+<body>
+	<div class="flower-background" id="flowerBackground" aria-hidden="true"></div>
+	<main class="focus-content">
+		<div class="open-image-box" id="openImageBox" aria-hidden="true">
+			<img class="gift-image closed" src="asset/closed.png" alt="Closed gift">
+			<img class="gift-image opened" src="asset/open.png" alt="Opened gift">
+		</div>
+		<h1 class="dedication">For Sayangku Kohan Gunawan, S.T.</h1>
+	</main>
+
+	<section class="next-scene" aria-label="Seminar congratulation scene">
+		<div class="print-zone">
+			<div class="printer-slot" aria-hidden="true"></div>
+			<div class="paper-track">
+				<article class="photo-paper" id="photoCard">
+					<h2 class="birthday-text">Congratulation<br>on your<br>Seminar Hasil</h2>
+					<div class="image-container">
+						<img src="pic/semhas.jpg" alt="Seminar Hasil photo">
+					</div>
+					<div class="heart-sticker" aria-hidden="true">❤️</div>
+				</article>
+			</div>
+		</div>
+	</section>
+
+	<section class="post-print-section" id="gift-showcase" aria-label="Gift navigation section">
+		<h2 class="post-title">Gift For My One and Only</h2>
+		<div class="gift-grid">
+			<a class="gift-link" href="letterforyou.html">
+				<img src="asset/letter.png" alt="Letter gift">
+				<p class="gift-caption">A Letter for My Sayang</p>
+			</a>
+			<a class="gift-link" href="ihopeyoulikeit.html">
+				<img src="asset/gift.png" alt="Gift surprise">
+				<p class="gift-caption">I Hope You Like It</p>
+			</a>
+			<a class="gift-link" href="timeline.html">
+				<img src="asset/journey.png" alt="Journey timeline">
+				<p class="gift-caption">Your Hardworking Journey</p>
+			</a>
+		</div>
+	</section>
+
+	<script>
+		const BURST_START_MS = 2220;
+		const RAIN_SHOWCASE_MS = 9500;
+		const RAIN_FADE_MS = 1200;
+		const PRINT_REVEAL_MS = 4500;
+		const FIRST_SCENE_DURATION_MS = BURST_START_MS + RAIN_SHOWCASE_MS;
+		const BURST_COUNT = 150;
+		const RAIN_COUNT = 450;
+		const flowerBackground = document.getElementById('flowerBackground');
+		const photoCard = document.getElementById('photoCard');
+		const flowerImages = [
+			...Array.from({ length: 30 }, (_, index) => `flower/${index + 2} (1).png`),
+			...Array.from({ length: 21 }, (_, index) => `flower/${index + 34}.png`)
+		];
+
+		function randomBetween(min, max) {
+			return Math.random() * (max - min) + min;
+		}
+
+		function randomFlowerSrc() {
+			return flowerImages[Math.floor(Math.random() * flowerImages.length)];
+		}
+
+		function spawnBurstFlowers() {
+			for (let i = 0; i < BURST_COUNT; i += 1) {
+				const flower = document.createElement('div');
+				const img = document.createElement('img');
+				const angleDeg = randomBetween(210, 330);
+				const angleRad = (angleDeg * Math.PI) / 180;
+				const distance = randomBetween(window.innerWidth * 0.18, window.innerWidth * 0.75);
+				const tx = Math.cos(angleRad) * distance;
+				const ty = (Math.sin(angleRad) * distance) - randomBetween(10, 120);
+
+				flower.className = 'burst-flower';
+				flower.style.setProperty('--size', `${randomBetween(56, 140)}px`);
+				flower.style.setProperty('--tx', `${tx}px`);
+				flower.style.setProperty('--ty', `${ty}px`);
+				flower.style.setProperty('--burst-duration', `${randomBetween(1.3, 2.1)}s`);
+				flower.style.setProperty('--r0', `${randomBetween(-40, 40)}deg`);
+				flower.style.setProperty('--r1', `${randomBetween(130, 300)}deg`);
+
+				img.src = randomFlowerSrc();
+				img.alt = '';
+				flower.appendChild(img);
+
+				flower.addEventListener('animationend', () => {
+					flower.remove();
+				}, { once: true });
+
+				flowerBackground.appendChild(flower);
+			}
+		}
+
+		function startRainFlowers() {
+			for (let i = 0; i < RAIN_COUNT; i += 1) {
+				const flower = document.createElement('div');
+				const img = document.createElement('img');
+
+				flower.className = 'rain-flower';
+				flower.style.setProperty('--size', `${randomBetween(100, 220)}px`);
+				flower.style.setProperty('--rx', `${randomBetween(-25, 110)}vw`);
+				flower.style.setProperty('--rain-duration', `${randomBetween(5.0, 8.0)}s`);
+				flower.style.setProperty('--rain-delay', `${randomBetween(0, 4.5)}s`);
+				flower.style.setProperty('--rr0', `${randomBetween(-30, 30)}deg`);
+				flower.style.setProperty('--rr1', `${randomBetween(140, 360)}deg`);
+
+				img.src = randomFlowerSrc();
+				img.alt = '';
+				flower.appendChild(img);
+
+				flowerBackground.appendChild(flower);
+			}
+		}
+
+		function triggerPrint() {
+			if (!photoCard) {
+				return;
+			}
+
+			photoCard.classList.remove('is-printing');
+			void photoCard.offsetWidth;
+			photoCard.classList.add('is-printing');
+		}
+
+		const shouldJumpToGiftShowcase = window.location.hash === '#gift-showcase';
+
+		if (shouldJumpToGiftShowcase) {
+			document.body.classList.add('show-next', 'post-scroll');
+			flowerBackground.style.display = 'none';
+			window.scrollTo({ top: 0, behavior: 'auto' });
+
+			requestAnimationFrame(() => {
+				const giftSection = document.getElementById('gift-showcase');
+				if (giftSection) {
+					giftSection.scrollIntoView({ behavior: 'auto', block: 'start' });
+				}
+			});
+		} else {
+
+			setTimeout(() => {
+				spawnBurstFlowers();
+				startRainFlowers();
+			}, BURST_START_MS);
+
+			setTimeout(() => {
+				flowerBackground.classList.add('rain-fade');
+			}, FIRST_SCENE_DURATION_MS - RAIN_FADE_MS);
+
+			setTimeout(() => {
+				document.body.classList.add('show-next');
+				window.scrollTo({ top: 0, behavior: 'auto' });
+				setTimeout(triggerPrint, 300);
+			}, FIRST_SCENE_DURATION_MS - (RAIN_FADE_MS / 2));
+
+			setTimeout(() => {
+				document.body.classList.add('post-scroll');
+			}, FIRST_SCENE_DURATION_MS - (RAIN_FADE_MS / 2) + PRINT_REVEAL_MS);
+		}
+	</script>
+</body>
+</html>

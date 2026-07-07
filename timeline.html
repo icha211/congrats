@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your TA Rollercoaster Journey</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --path-color: rgba(74, 59, 69, 0.6);        
+            --path-active-color: #fca3b7; 
+            --text-dark: #2d1b2a;         
+            --accent-glow: #e2849b;       
+        }
+
+        body {
+            margin: 0;
+            padding: 40px 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-image: linear-gradient(rgba(31, 20, 30, 0.45), rgba(31, 20, 30, 0.45)), url('pic/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: #fff0f5;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; 
+            overflow-y: hidden;
+            overflow-x: auto; 
+        }
+
+        .header-section {
+            padding-left: 60px;
+            position: fixed;
+            top: 20px;
+            left: 0;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        h1 {
+            margin: 0 0 5px 0;
+            color: #ffffff;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7), 0 0 15px rgba(252, 163, 183, 0.6);
+        }
+
+        .subtitle {
+            font-weight: 400;
+            color: #ffebf0;
+            margin: 0;
+            font-style: italic;
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .back-gift-btn {
+            position: fixed;
+            top: 22px;
+            right: 24px;
+            z-index: 30;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            background: rgba(255, 245, 250, 0.92);
+            color: #5b2d46;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.1px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        }
+
+        .back-gift-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.28);
+            background: #ffffff;
+        }
+
+        .back-gift-btn:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 700px) {
+            .back-gift-btn {
+                top: 16px;
+                right: 12px;
+                padding: 9px 14px;
+                font-size: 12px;
+            }
+        }
+
+        /* Added total layout buffer width to ensure the path handles padding beautifully */
+        .map-container {
+            position: relative;
+            width: 3400px; 
+            height: 650px;
+            margin-top: 100px;
+        }
+
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .road-bg {
+            fill: none;
+            stroke: var(--path-color);
+            stroke-width: 12;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .road-active {
+            fill: none;
+            stroke: var(--path-active-color);
+            stroke-width: 12;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 6000;
+            stroke-dashoffset: 6000;
+            transition: stroke-dashoffset 2.5s ease-in-out;
+            filter: drop-shadow(0px 0px 10px var(--accent-glow));
+        }
+
+        .milestone {
+            position: absolute;
+            z-index: 2;
+            transform: translate(-50%, -50%) scale(0);
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .milestone.visible {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .bullet {
+            width: 26px;
+            height: 26px;
+            border: 4px solid #1f141e;
+            border-radius: 50%;
+        }
+
+        /* Unique Bullet Colors */
+        #step0 .bullet { background-color: #ffb3ba; box-shadow: 0 0 20px #ffb3ba; }
+        #step1 .bullet { background-color: #ffdfba; box-shadow: 0 0 20px #ffdfba; }
+        #step2 .bullet { background-color: #ffffba; box-shadow: 0 0 20px #ffffba; }
+        #step3 .bullet { background-color: #baffc9; box-shadow: 0 0 20px #baffc9; }
+        #step4 .bullet { background-color: #bae1ff; box-shadow: 0 0 20px #bae1ff; }
+        #step5 .bullet { background-color: #e8b7ff; box-shadow: 0 0 20px #e8b7ff; }
+        #step6 .bullet { background-color: #ffb7e6; box-shadow: 0 0 20px #ffb7e6; }
+        #step7 .bullet { background-color: #fca3b7; box-shadow: 0 0 20px #fca3b7; }
+        #step8 .bullet { background-color: #f38181; box-shadow: 0 0 20px #f38181; }
+        #step9 .bullet { background-color: #00f5d4; box-shadow: 0 0 20px #00f5d4; }
+
+        /* Semi-Transparent White Pop-up Cards */
+        .info-card {
+            position: absolute;
+            width: 250px;
+            background-color: rgba(255, 255, 255, 0.93); 
+            backdrop-filter: blur(4px);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.35);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .milestone.visible .info-card {
+            pointer-events: auto;
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .pos-top { bottom: 40px; left: -125px; }
+        .pos-bottom { top: 40px; left: -125px; }
+
+        .card-content {
+            transition: filter 0.4s ease, opacity 0.4s ease;
+        }
+
+        .info-card h3 {
+            margin: 0 0 6px 0;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .info-card .time {
+            font-size: 12px;
+            color: #61525e;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .image-placeholder {
+            width: 100%;
+            height: 110px;
+            background-color: rgba(0, 0, 0, 0.04);
+            border: 1px dashed #aba2a9;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: #80737d;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .image-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Lock Overlay Layers */
+        .lock-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            box-sizing: border-box;
+            z-index: 10;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .lock-overlay.interactive {
+            cursor: pointer;
+        }
+
+        .lock-overlay.permanent {
+            cursor: not-allowed;
+        }
+
+        .lock-emoji {
+            font-size: 38px;
+            margin-bottom: 8px;
+        }
+
+        .lock-preview-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #8c7b87; 
+            font-style: italic;
+            text-align: center;
+        }
+
+        .info-card.locked .card-content {
+            filter: blur(12px);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .confetti-canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            border-radius: 16px;
+            pointer-events: none;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+
+    <a class="back-gift-btn" href="foryou.html#gift-showcase">Back for More Gift</a>
+
+    <div class="header-section">
+        <h1>Your TA Journey: A Beautiful Rollercoaster</h1>
+        <div class="subtitle">Watching your journey as a final year student... ✨</div>
+    </div>
+    
+    <div class="map-container">
+        <svg id="roadmapSvg">
+            <path id="roadPath" class="road-bg" d="M 200 325 Q 350 600 500 325 T 800 325 Q 950 50 1100 325 T 1400 325 Q 1550 600 1700 325 T 2000 325 Q 2150 50 2300 325 T 2600 325 Q 2750 600 2900 325 T 3300 325" />
+            <path id="activePath" class="road-active" d="M 200 325 Q 350 600 500 325 T 800 325 Q 950 50 1100 325 T 1400 325 Q 1550 600 1700 325 T 2000 325 Q 2150 50 2300 325 T 2600 325 Q 2750 600 2900 325 T 3300 325" />
+        </svg>
+
+        <div class="milestone" id="step0" data-progress="0.0">
+            <div class="bullet"></div>
+            <div class="info-card pos-top locked" onclick="unlockCard(this)">
+                <div class="lock-overlay interactive">
+                    <div class="lock-emoji">🔒</div>
+                    <div class="lock-preview-title">Start TA</div>
+                </div>
+                <canvas class="confetti-canvas"></canvas>
+                <div class="card-content">
+                    <h3>Start TA</h3>
+                    <div class="time">Awal Semester 7</div>
+                    <div class="image-placeholder"><img src="timeline/awalTA.gif" alt="Start TA"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="milestone" id="step1" data-progress="0.09">
+            <div class="bullet"></div>
+            <div class="info-card pos-bottom locked" onclick="unlockCard(this)">
+                <div class="lock-overlay interactive">
+                    <div class="lock-emoji">🔒</div>
+                    <div class="lock-preview-title">Ganti Judul TA</div>
+                </div>
+                <canvas class="confetti-canvas"></canvas>
+                <div class="card-content">
+                    <h3>Ganti Judul TA</h3>
+                    <div class="time">November 2025</div>
+                    <div class="image-placeholder"><img src="timeline/gantijudul.gif" alt="Ganti Judul TA"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="milestone" id="step2" data-progress="0.19">
+            <div class="bullet"></div>
+            <div class="info-card pos-top locked" onclick="unlockCard(this)">
+                <div class="lock-overlay interactive">
+                    <div class="lock-emoji">🔒</div>
+                    <div class="lock-preview-title">Start TA Lagi (Ganti Judul)</div>
+                </div>
+                <canvas class="confetti-canvas"></canvas>
+                <div class="card-content">
+                    <h3>Start TA Lagi (Ganti Judul)</h3>
+                    <div class="time">December 2026</div>
+                    <div class="image-placeholder"><img src="timeline/laptop.gif" alt="Start TA Lagi"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="milestone" id="step3" data-progress="0.30">
+            <div class="bullet"></div>
+            <div class="info-card pos-bottom locked" onclick="unlockCard(this)">
+                <div class="lock-overlay interactive">
+                    <div class="lock-emoji">🔒</div>
+                    <div class="lock-preview-title">Coding Website XGBoost</div>
+                </div>
+                <canvas class="confetti-canvas"></canvas>
+                <div class="card-content">
+                    <h3>Coding Website XGBoost</h3>
+                    <div class="time">February 2026</div>
+                    <div class="image-placeholder"><img src="timeline/coding.gif" alt="Coding Website XGBoost"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="milestone" id="step4" data-progress="0.41">
+            <div class="bullet"></div>
+            <div class="info-card pos-top locked" onclick="unlockCard(this)">
+                <div class="lock-overlay interactive">
+                    <div class="lock-emoji">🔒</div>
+                    <div class="lock-preview-title">Mulai Penyusunan Laporan</div>
+                </div>
+                <canvas class="confetti-canvas"></canvas>
+                <div class="card-content">
+                    <h3>Mulai Penyusunan Laporan</h3>
+                    <div class="time">Maret 2026</div>
+                    <div class="image-placeholder"><img src="timeline/laporan.gif" alt="Mulai Penyusunan Laporan"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="milestone" id="step5" data-progress="0.52">
+            <div class="bullet"></div>
+            <div class="info-card pos-bottom locked" onclick="unlockCard(this)">
+                <div class="lock-overlay interactive">
+                    <div class="lock-emoji">🔒</div>
+                    <div class="lock-preview-title">Ke Jakarta/Bogor</div>
+                </div>
+                <canvas class="confetti-canvas"></canvas>
+                <div class="card-content">
+                    <h3>Ke Jakarta/Bogor</h3>
+                    <div class="time">April 2026</div>
+                    <div class="image-placeholder"><img src="timeline/travel.gif" alt="Ke Jakarta Bogor"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="milestone" id="step6" data-progress="0.63">
+            <div class="bullet"></div>
+            <div class="info-card pos-top locked" onclick="unlockCard(this)">
+                <div class="lock-overlay interactive">
+                    <div class="lock-emoji">🔒</div>
+                    <div class="lock-preview-title">Seminar Proposal</div>
+                </div>
+                <canvas class="confetti-canvas"></canvas>
+                <div class="card-content">
+                    <h3>Seminar Proposal</h3>
+                    <div class="time">10 Maret 2026</div>
+                    <div class="image-placeholder"><img src="timeline/sempro.gif" alt="Seminar Proposal"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="milestone" id="step7" data-progress="0.75">
+            <div class="bullet"></div>
+            <div class="info-card pos-top locked" onclick="unlockCard(this)">
+                <div class="lock-overlay interactive">
+                    <div class="lock-emoji">🔒</div>
+                    <div class="lock-preview-title">Seminar Hasil</div>
+                </div>
+                <canvas class="confetti-canvas"></canvas>
+                <div class="card-content">
+                    <h3>Seminar Hasil</h3>
+                    <div class="time">2 Juli 2025</div>
+                    <div class="image-placeholder"><img src="pic/semhas.jpg" alt="Seminar Hasil"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="milestone" id="step8" data-progress="0.87">
+            <div class="bullet"></div>
+            <div class="info-card pos-top locked">
+                <div class="lock-overlay permanent">
+                    <div class="lock-emoji">🔒</div>
+                    <div class="lock-preview-title">Yudisium</div>
+                </div>
+                <div class="card-content">
+                    <h3>Yudisium</h3>
+                    <div class="time">🔒 Locked Future</div>
+                    <div class="image-placeholder">[Locked]</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="milestone" id="step9" data-progress="1.0">
+            <div class="bullet"></div>
+            <div class="info-card pos-bottom locked">
+                <div class="lock-overlay permanent">
+                    <div class="lock-emoji">🔒</div>
+                    <div class="lock-preview-title">Wisuda</div>
+                </div>
+                <div class="card-content">
+                    <h3>Wisuda</h3>
+                    <div class="time">🔒 Locked Future</div>
+                    <div class="image-placeholder">[Locked]</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentStep = 0;
+        const stepIntervalDuration = 3500; 
+
+        const activePath = document.getElementById('activePath');
+        const roadPath = document.getElementById('roadPath');
+        const totalLength = activePath.getTotalLength();
+
+        activePath.style.strokeDasharray = totalLength;
+        activePath.style.strokeDashoffset = totalLength;
+
+        function alignMilestonesToPath() {
+            const milestones = document.querySelectorAll('.milestone');
+            milestones.forEach(milestone => {
+                const progressRatio = parseFloat(milestone.getAttribute('data-progress'));
+                const distanceOnPath = totalLength * progressRatio;
+                const pathPoint = roadPath.getPointAtLength(distanceOnPath);
+                
+                milestone.style.left = `${pathPoint.x}px`;
+                milestone.style.top = `${pathPoint.y}px`;
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            alignMilestonesToPath();
+            revealStep(0);
+        });
+
+        const journeyTimer = setInterval(() => {
+            const milestones = document.querySelectorAll('.milestone');
+            if (currentStep < milestones.length - 1) {
+                currentStep++;
+                revealStep(currentStep);
+            } else {
+                clearInterval(journeyTimer);
+            }
+        }, stepIntervalDuration);
+
+        function revealStep(stepIndex) {
+            const element = document.getElementById(`step${stepIndex}`);
+            if (!element) return;
+
+            const progress = parseFloat(element.getAttribute('data-progress'));
+            const newOffset = totalLength - (totalLength * progress);
+            activePath.style.strokeDashoffset = newOffset;
+
+            setTimeout(() => {
+                element.classList.add('visible');
+                element.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }, stepIndex === 0 ? 0 : 700);
+        }
+
+        function unlockCard(card) {
+            if (!card.classList.contains('locked') || card.querySelector('.lock-overlay').classList.contains('permanent')) return;
+
+            card.classList.remove('locked');
+            const overlay = card.querySelector('.lock-overlay');
+            overlay.style.transform = 'scale(0.8) translateY(-10px)';
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 400);
+
+            const canvas = card.querySelector('.confetti-canvas');
+            triggerConfetti(canvas);
+        }
+
+        function triggerConfetti(canvas) {
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.offsetWidth;
+            canvas.height = canvas.parentElement.offsetHeight;
+
+            let particles = [];
+            const colors = ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e8b7ff', '#fca3b7'];
+
+            for (let i = 0; i < 45; i++) {
+                particles.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    radius: Math.random() * 4 + 2,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vx: (Math.random() - 0.5) * 7,
+                    vy: (Math.random() - 0.5) * 7 - 2,
+                    opacity: 1
+                });
+            }
+
+            function update() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let alive = false;
+
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.12; 
+                    p.opacity -= 0.018;
+
+                    if (p.opacity > 0) {
+                        alive = true;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                        ctx.fillStyle = p.color;
+                        ctx.globalAlpha = p.opacity;
+                        ctx.fill();
+                    }
+                });
+
+                if (alive) {
+                    requestAnimationFrame(update);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+            update();
+        }
+    </script>
+</body>
+</html>
